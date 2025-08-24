@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import Image from 'next/image';
@@ -10,17 +10,25 @@ export default function LoginForm() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const { login, user } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
 
+  // Memoize the redirect path to prevent unnecessary re-renders
+  const redirectTo = useMemo(() => {
+    return searchParams.get('redirect') || '/dashboard';
+  }, [searchParams]);
+
   useEffect(() => {
-    if (user) {
-      // Check if there's a redirect parameter
-      const redirectTo = searchParams.get('redirect') || '/dashboard';
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (user && mounted) {
       router.push(redirectTo);
     }
-  }, [user, router, searchParams]);
+  }, [user, router, redirectTo, mounted]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,8 +39,6 @@ export default function LoginForm() {
       const success = await login(email, password);
       if (success) {
         // Redirect will be handled by useEffect
-        // Check if there's a redirect parameter
-        const redirectTo = searchParams.get('redirect') || '/dashboard';
         router.push(redirectTo);
       } else {
         setError('Invalid credentials. Please try again.');
@@ -43,6 +49,18 @@ export default function LoginForm() {
       setIsLoading(false);
     }
   };
+
+  // Prevent hydration mismatch by not rendering until mounted
+  if (!mounted) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">

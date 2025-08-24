@@ -11,6 +11,7 @@ A secure, fintech-grade invoice management application built with Next.js 15, de
 - **Real-time Dashboard** with pagination and filtering
 - **PDF Export** functionality (mock implementation)
 - **Responsive Design** optimized for all devices
+- **Optimized Hydration** with proper client-side mounting
 
 ### Security Features
 - **JWT Authentication** with secure HTTP-only cookies
@@ -28,15 +29,18 @@ A secure, fintech-grade invoice management application built with Next.js 15, de
 - **Bundle Optimization** with dynamic imports
 - **Pagination** and lazy loading
 
+
 ## 🏗️ Architecture
 
 ### Tech Stack
-- **Frontend**: Next.js 15, React 19, TypeScript
+- **Frontend**: Next.js 15.5.0, React 19.1.0, TypeScript
 - **Styling**: Tailwind CSS 4
 - **Authentication**: JWT with HTTP-only cookies
 - **Validation**: Zod schemas
-- **State Management**: React Context API
-- **Database**: Mock in-memory database (production-ready structure)
+- **State Management**: React Context API + SWR for data fetching
+- **HTTP Client**: Axios for API requests
+- **Database**: MongoDB with Mongoose ODM
+- **Development**: Turbopack for faster builds
 
 ### Project Structure
 ```
@@ -44,26 +48,47 @@ wl/
 ├── app/                          # Next.js App Router
 │   ├── api/                     # API Routes
 │   │   ├── auth/               # Authentication endpoints
+│   │   │   ├── login/         # Login endpoint
+│   │   │   ├── logout/        # Logout endpoint
+│   │   │   └── me/            # User info endpoint
 │   │   └── invoices/           # Invoice management endpoints
+│   │       ├── [id]/          # Individual invoice operations
+│   │       │   └── pdf/       # PDF export endpoint
+│   │       └── route.ts       # Invoice CRUD operations
 │   ├── dashboard/              # Dashboard page (SSR + ISR)
 │   ├── invoice/                # Invoice pages
 │   │   ├── [id]/              # Invoice details (SSR)
 │   │   └── new/               # Create invoice (CSR)
-│   ├── login/                  # Login page
+│   ├── login/                  # Login page with optimized hydration
 │   ├── globals.css             # Global styles
 │   ├── layout.tsx              # Root layout with auth provider
 │   └── page.tsx                # Home page with redirects
 ├── components/                  # Reusable UI components
+│   ├── Dashboard.tsx           # Main dashboard component
 │   ├── ErrorBoundary.tsx       # Error handling component
 │   ├── InvoiceList.tsx         # Invoice list with pagination
 │   └── Navigation.tsx          # Navigation component
 ├── contexts/                    # React contexts
 │   └── AuthContext.tsx         # Authentication context
+├── controllers/                 # Business logic controllers
+│   ├── invoiceController.ts    # Invoice business logic
+│   └── userController.ts       # User business logic
 ├── lib/                         # Utility functions
-│   ├── mockDb.ts               # Mock database operations
-│   └── utils.ts                # Helper functions
+│   ├── axios.ts               # Axios configuration
+│   ├── db.ts                  # Database connection
+│   ├── fetcher.ts             # SWR fetcher function
+│   ├── seed.ts                # Database seeding
+│   ├── server-utils.ts        # Server-side utilities
+│   ├── swr-config.ts          # SWR configuration
+│   └── utils.ts               # Helper functions
+├── models/                      # Database models
+│   ├── Invoice.ts             # Invoice model
+│   └── User.ts                # User model
+├── scripts/                     # Utility scripts
 ├── types/                       # TypeScript type definitions
 │   └── index.ts                # Application interfaces
+├── middleware.ts                # Next.js middleware for auth
+├── next.config.ts              # Next.js configuration
 └── README.md                    # This file
 ```
 
@@ -72,6 +97,7 @@ wl/
 ### Prerequisites
 - Node.js 18+ 
 - npm or yarn
+- MongoDB (local or cloud instance)
 
 ### Installation Steps
 
@@ -93,23 +119,38 @@ wl/
    JWT_SECRET=your-super-secret-jwt-key-change-in-production
    JWT_EXPIRES_IN=24h
    
+   # Database Configuration
+   MONGODB_URI=mongodb://localhost:27017/invoice-management
+   
    # Security
    NODE_ENV=development
    RATE_LIMIT_WINDOW_MS=900000
    RATE_LIMIT_MAX_REQUESTS=100
    ```
 
-4. **Run the development server**
+4. **Set up the database**
+   ```bash
+   # Seed the database with initial data
+   npm run seed
+   ```
+
+5. **Run the development server**
    ```bash
    npm run dev
    ```
 
-5. **Open your browser**
+6. **Open your browser**
    Navigate to [http://localhost:3000](http://localhost:3000)
 
 ### Demo Credentials
-- **Email**: admin@fintech.com
-- **Password**: Pass@1234
+- **Admin User**:
+  - Email: admin@fintech.com
+  - Password: Pass@1234
+- **Accountant User**:
+  - Email: accountant@fintech.com
+  - Password: Pass@1234
+
+
 
 ## Security Implementation
 
@@ -118,12 +159,14 @@ wl/
 - **Token Expiration**: Configurable token lifetime
 - **Role-based Access**: Admin and Accountant roles
 - **Route Protection**: All sensitive routes require authentication
+- **Middleware Protection**: Next.js middleware for route-level auth
 
 ### Data Protection
 - **Input Sanitization**: All user inputs are sanitized to prevent XSS
 - **Data Isolation**: Users can only access their own invoices
 - **Validation**: Server-side and client-side validation with Zod
 - **Rate Limiting**: Prevents brute force attacks on login
+- **MongoDB Security**: Proper data validation and sanitization
 
 ### Security Headers
 - **X-Frame-Options**: DENY (prevents clickjacking)
@@ -216,6 +259,7 @@ npm start
 NODE_ENV=production
 JWT_SECRET=<strong-random-secret>
 JWT_EXPIRES_IN=24h
+MONGODB_URI=<your-mongodb-connection-string>
 ```
 
 ### Security Checklist for Production
@@ -226,6 +270,7 @@ JWT_EXPIRES_IN=24h
 - [ ] Set up monitoring and logging
 - [ ] Regular security audits
 - [ ] Database security hardening
+- [ ] Configure MongoDB authentication
 
 ## Testing
 
@@ -238,6 +283,7 @@ JWT_EXPIRES_IN=24h
 - [ ] Input validation and sanitization
 - [ ] Error handling and boundaries
 - [ ] Responsive design on different devices
+- [ ] Hydration consistency (no console warnings)
 
 ### Security Testing
 - [ ] Authentication bypass attempts
@@ -252,10 +298,12 @@ JWT_EXPIRES_IN=24h
 1. **New API Routes**: Add to `app/api/` directory
 2. **New Pages**: Create in appropriate `app/` subdirectory
 3. **New Components**: Add to `components/` directory
-4. **New Types**: Extend interfaces in `types/index.ts`
+4. **New Controllers**: Add business logic to `controllers/` directory
+5. **New Models**: Add database models to `models/` directory
+6. **New Types**: Extend interfaces in `types/index.ts`
 
 ### Database Integration
-Replace the mock database in `lib/mockDb.ts` with your preferred database.
+The application uses MongoDB with Mongoose ODM. Models are defined in the `models/` directory and business logic in the `controllers/` directory.
 
 ## Performance Optimization
 
@@ -265,10 +313,12 @@ Replace the mock database in `lib/mockDb.ts` with your preferred database.
 - **Image Optimization**: next/image for asset optimization
 - **Bundle Splitting**: Dynamic imports for large components
 - **Pagination**: 5 items per page with lazy loading
+- **SWR**: Client-side data fetching and caching
+- **Turbopack**: Faster development builds
+- **Hydration Safety**: Proper client-side mounting checks
 
 ### Future Optimizations
 - **Redis Caching**: For frequently accessed data
 - **CDN Integration**: For static assets
 - **Database Indexing**: For large datasets
 - **Background Jobs**: For PDF generation and email sending
-
