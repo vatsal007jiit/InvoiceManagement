@@ -69,7 +69,7 @@ export async function seedDatabase() {
           }
         ],
         notes: 'Campaign completed successfully',
-        userId: adminUser._id
+        userId: accountantUser._id
       },
       {
         invoiceNumber: 'INV-003-2025',
@@ -169,7 +169,7 @@ export async function seedDatabase() {
           }
         ],
         notes: 'Infrastructure deployed successfully',
-        userId: adminUser._id
+        userId: accountantUser._id
       },
       {
         invoiceNumber: 'INV-008-2025',
@@ -177,7 +177,7 @@ export async function seedDatabase() {
         clientEmail: 'billing@airesearch.com',
         amount: 7500.00,
         currency: 'INR',
-        status: 'pending',
+        status: 'paid',
         dueDate: new Date('2025-03-15'),
         issueDate: new Date('2025-02-05'),
         lineItems: [

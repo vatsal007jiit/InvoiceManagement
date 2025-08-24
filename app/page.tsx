@@ -1,6 +1,9 @@
 import { redirect } from 'next/navigation';
 import { getAuthUserFromHeaders } from '@/lib/server-utils';
 
+// Force dynamic rendering because we use headers() for authentication
+export const dynamic = 'force-dynamic';
+
 export default async function HomePage() {
   // Check if user is authenticated
   const user = await getAuthUserFromHeaders();

@@ -8,8 +8,12 @@ interface DashboardPageProps {
   searchParams: Promise<{ page?: string; limit?: string }>;
 }
 
-// Enable ISR with 60-second revalidation
-export const revalidate = 60;
+// Force dynamic rendering since we use headers() for authentication
+export const dynamic = 'force-dynamic';
+
+// Enable ISR with 60-second revalidation [We cant use ISR because we are already using SSR. So they conflict]
+// export const revalidate = 60;
+
 
 export default async function DashboardPage({ searchParams }: DashboardPageProps) {
   // Check if user is authenticated

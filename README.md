@@ -24,7 +24,7 @@ A secure, fintech-grade invoice management application built with Next.js 15, de
 
 ### Performance & Optimization
 - **Server-Side Rendering (SSR)** for authentication checks
-- **Incremental Static Regeneration (ISR)** with 60-second revalidation
+<!-- - **Incremental Static Regeneration (ISR)** with 60-second revalidation [Because used SSR in dashboard] --> 
 - **Optimized Images** with next/image
 - **Bundle Optimization** with dynamic imports
 - **Pagination** and lazy loading
@@ -55,7 +55,7 @@ wl/
 │   │       ├── [id]/          # Individual invoice operations
 │   │       │   └── pdf/       # PDF export endpoint
 │   │       └── route.ts       # Invoice CRUD operations
-│   ├── dashboard/              # Dashboard page (SSR + ISR)
+│   ├── dashboard/              # Dashboard page (SSR)
 │   ├── invoice/                # Invoice pages
 │   │   ├── [id]/              # Invoice details (SSR)
 │   │   └── new/               # Create invoice (CSR)
@@ -150,7 +150,27 @@ wl/
   - Email: accountant@fintech.com
   - Password: Pass@1234
 
+## Recent Improvements
 
+### Dynamic Rendering Configuration
+- **Issue**: Build errors due to `headers()` usage in static pages
+- **Solution**: Added `export const dynamic = 'force-dynamic'` to pages using authentication headers
+- **Impact**: Resolves build errors and ensures proper server-side authentication checks
+- **Pages Fixed**: Home page (`/`) and Dashboard page (`/dashboard`)
+
+### Viewport Configuration Fix
+- **Issue**: Next.js 15 warning about unsupported metadata viewport configuration
+- **Solution**: Moved viewport configuration to separate `viewport` export in `app/layout.tsx`
+- **Impact**: Eliminates Next.js warnings and follows latest best practices
+
+### Hydration Optimization
+- **Issue**: Potential server/client rendering mismatches in LoginForm
+- **Solution**: Added proper client-side mounting checks and optimized searchParams usage
+- **Features**:
+  - Client-side mounting state management
+  - Memoized redirect paths
+  - Loading states until component is fully mounted
+  - Optimized useEffect dependencies
 
 ## Security Implementation
 
@@ -308,7 +328,6 @@ The application uses MongoDB with Mongoose ODM. Models are defined in the `model
 ## Performance Optimization
 
 ### Current Optimizations
-- **ISR**: 60-second revalidation for dashboard
 - **SSR**: Authentication checks and initial data loading
 - **Image Optimization**: next/image for asset optimization
 - **Bundle Splitting**: Dynamic imports for large components
